@@ -32,8 +32,8 @@ func getContentLength(m http.Header) int {
 
 func main(){
     log.Println("Hello world")
-    url := "http://download.wavetlan.com/SVV/Media/HTTP/H264/Talkinghead_Media/H264_test1_Talkinghead_mp4_480x360.mp4"
-    //url := "https://nodejs.org/dist/v4.2.4/node-v4.2.4.tar.gz"
+    //url := "http://download.wavetlan.com/SVV/Media/HTTP/H264/Talkinghead_Media/H264_test1_Talkinghead_mp4_480x360.mp4"
+    url := "https://nodejs.org/dist/v4.2.4/node-v4.2.4.tar.gz"
     //url := "https://storage.googleapis.com/golang/go1.5.linux-amd64.tar.gz"
     //url := "http://localhost/go1.5.linux-amd64.tar.gz"
 
@@ -45,7 +45,8 @@ func main(){
     log.Println(acceptRanges(res.Header))
     //log.Println(getFilenameFromUrl(url))
 
-    Download(url, getContentLength(res.Header))
+    //Download(url, getContentLength(res.Header))
+    Resume(url, getContentLength(res.Header))
     //DownloadSingle(url)
 
 

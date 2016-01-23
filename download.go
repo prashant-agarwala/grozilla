@@ -6,6 +6,7 @@ import (
   "log"
   "io/ioutil"
   "sync"
+  "os"
 )
 
 const noOfFiles = 40
@@ -50,7 +51,7 @@ func downloadPart(url,filename string, index, byteStart, byteEnd int){
 func Download(url string,length int){
     partLength := length/noOfFiles
     filename := getFilenameFromUrl(url)
-    for i:= 0 ; i < noOfFiles ; i++ {
+    for i := 0 ; i < noOfFiles ; i++ {
       byteStart := partLength * (i)
       byteEnd   := byteStart + partLength
       if (i == noOfFiles - 1 ){
@@ -58,6 +59,34 @@ func Download(url string,length int){
       }
       wg.Add(1)
       go downloadPart(url,filename,i,byteStart,byteEnd)
+    }
+    wg.Wait()
+    mergeFiles(filename)
+    clearFiles(filename)
+    reader,_ := ioutil.ReadFile(filename)
+    log.Println(len(reader))
+}
+
+func Resume(url string,length int){
+    filename := getFilenameFromUrl(url)
+    partLength := length/noOfFiles
+    for i := 0 ; i < noOfFiles ; i++ {
+      part_filename := "temp/" +filename + "_" + strconv.Itoa(i)
+      if _, err := os.Stat(part_filename); err != nil {
+        byteStart := partLength * (i)
+        byteEnd   := byteStart + partLength
+        if (i == noOfFiles - 1 ){
+          byteEnd = length
+        }
+        wg.Add(1)
+        go downloadPart(url,filename,i,byteStart,byteEnd)
+      } else {
+        byteStart, byteEnd := readHeader(part_filename)
+        if (byteStart < byteEnd) {
+          wg.Add(1)
+          go downloadPart(url,filename,i,byteStart,byteEnd)
+        }
+      }
     }
     wg.Wait()
     mergeFiles(filename)

@@ -43,6 +43,17 @@ func writeBytes(part_filename string, reader []byte, byteStart , byteEnd int) er
     return nil
 }
 
+func readHeader(part_filename string) (int,int){
+    reader,err := ioutil.ReadFile(part_filename)
+    if (err != nil) {
+      log.Fatal(err)
+    }
+    header := reader[:16]
+    byteStart := int(binary.LittleEndian.Uint64(header[0:8])) + len(reader)-16
+    byteEnd   := int(binary.LittleEndian.Uint64(header[8:16]))
+    return byteStart,byteEnd
+}
+
 func mergeFiles(filename string){
     for i := 0; i < noOfFiles ; i++ {
         part_filename := "temp/" + filename + "_" + strconv.Itoa(i)
