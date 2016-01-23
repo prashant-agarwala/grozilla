@@ -7,25 +7,45 @@ import (
   "io/ioutil"
   "sync"
   "os"
+  "time"
+  "errors"
 )
+
+type http_response struct {
+    resp *http.Response
+    err  error
+}
 
 const PACKETLENGTH = 32000
 var wg sync.WaitGroup
 
-func downloadPacket(client *http.Client, req *http.Request,part_filename string,byteStart, byteEnd int){
-    resp, err := client.Do(req)
-    if err != nil {
-      log.Fatal(err)
+func downloadPacket(client *http.Client, req *http.Request,part_filename string,byteStart, byteEnd int) error {
+    c := make(chan http_response, 1)
+    go func() {
+      resp,err := client.Do(req)
+      http_response := http_response{resp,err}
+      c <- http_response
+    }()
+    select {
+    case http_response := <-c:
+      if http_response.err != nil{
+        return http_response.err
+      }
+      defer http_response.resp.Body.Close()
+      reader, err := ioutil.ReadAll(http_response.resp.Body)
+      if err != nil {
+        return err
+      }
+      log.Println(part_filename, len(reader))
+      err = writeBytes(part_filename,reader,byteStart,byteEnd)
+      if err != nil {
+        return err
+      }
+    case <-time.After(time.Second * time.Duration(10)):
+      err := errors.New("Manual time out as response not recieved")
+      return err
     }
-    reader, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-      log.Fatal(err)
-    }
-    log.Println(part_filename, len(reader))
-    err = writeBytes(part_filename,reader,byteStart,byteEnd)
-    if err != nil {
-      log.Fatal(err)
-    }
+    return nil
 }
 
 func downloadPart(url,filename string, index, byteStart, byteEnd int){
