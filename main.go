@@ -32,7 +32,9 @@ func getContentLength(m http.Header) int {
 
 func main(){
     log.Println("Hello world")
-    url := "http://download.wavetlan.com/SVV/Media/HTTP/H264/Talkinghead_Media/H264_test1_Talkinghead_mp4_480x360.mp4"
+  //url := "http://download.wavetlan.com/SVV/Media/HTTP/H264/Talkinghead_Media/H264_test1_Talkinghead_mp4_480x360.mp4"
+    url := "http://localhost/go1.5.linux-amd64.tar.gz"
+
     res, err := http.Head(url);
     if err != nil{
       log.Fatal(err)
@@ -40,6 +42,8 @@ func main(){
     log.Println(acceptRanges(res.Header))
     //log.Println(getFilenameFromUrl(url))
 
-    Download(url, getContentLength(res.Header))
+    //Download(url, getContentLength(res.Header))
+    DownloadSingle(url)
+
 
 }

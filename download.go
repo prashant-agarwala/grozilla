@@ -51,5 +51,23 @@ func Download(url string,length int){
     clearFiles(filename)
     reader,_ := ioutil.ReadFile(filename)
     log.Println(len(reader))
+}
 
+func DownloadSingle(url string){
+    filename := getFilenameFromUrl(url)
+    client := &http.Client{}
+    req, _ := http.NewRequest("GET",url, nil)
+    resp, err := client.Do(req)
+    if err != nil {
+      log.Fatal(err)
+    }
+    reader, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+      log.Fatal(err)
+    }
+    log.Println(len(reader))
+    err = ioutil.WriteFile(filename, reader,0666)
+    if err != nil {
+      log.Fatal(err)
+    }
 }
