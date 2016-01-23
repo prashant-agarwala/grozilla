@@ -7,6 +7,8 @@ import (
   "os"
   "encoding/binary"
   "bytes"
+  "io"
+  "time"
 )
 
 func createTempFile(part_filename string,fileBegin ,fileEnd int){
@@ -54,10 +56,11 @@ func readHeader(part_filename string) (int,int){
     return byteStart,byteEnd
 }
 
-func mergeFiles(filename string){
-    for i := 0; i < noOfFiles ; i++ {
+func mergeFiles(filename string,count int){
+    temp_filename := strconv.Itoa(time.Now().Nanosecond()) + "_" + filename
+    for i := 0; i < count ; i++ {
         part_filename := "temp/" + filename + "_" + strconv.Itoa(i)
-        file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND,0666)
+        file, err := os.OpenFile(temp_filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND,0666)
         if err != nil {
           log.Fatal(err)
         }
@@ -71,12 +74,56 @@ func mergeFiles(filename string){
           log.Fatal(err)
         }
     }
+    os.Rename(temp_filename,filename)
+}
+func isDirEmpty(name string) (bool, error) {
+    f, err := os.Open(name)
+    if err != nil {
+            return false, err
+    }
+    defer f.Close()
+    _, err = f.Readdir(1)
+    if err == io.EOF {
+            return true, nil
+    }
+    return false, err
 }
 
-func clearFiles(filename string){
-  os.RemoveAll("temp")
-  // for i := 0; i < noOfFiles ; i++ {
-  //   part_filename := "temp/" + filename + "_" + strconv.Itoa(i)
-  //   os.Remove(part_filename)
-  // }
+func clearFiles(filename string, count int){
+  //os.RemoveAll("temp")
+  for i := 0; i < count ; i++ {
+    //time.Sleep(1*time.Second)
+    part_filename := "temp/" + filename + "_" + strconv.Itoa(i)
+    os.Remove(part_filename)
+  }
+  empty, err := isDirEmpty("temp/")
+  if err != nil{
+    log.Fatal(err)
+  }
+  if empty {
+    os.Remove("temp/")
+  }
+}
+
+func noOfExistingConnection(filename string,length int) int{
+    filename_existing := "temp/" + filename + "_0"
+    if _, err := os.Stat(filename_existing); err != nil {
+      log.Fatal("No file to resume downloading")
+    }
+    if _, err := os.Stat(filename_existing); err == nil {
+      reader,err := ioutil.ReadFile(filename_existing)
+      if (err != nil){
+        log.Fatal(err)
+      }
+      if len(reader) < 16 {
+        log.Fatal("No file to resume downloading")
+      }
+      header := reader[:16]
+      interval := int(binary.LittleEndian.Uint64(header[8:16])) - int(binary.LittleEndian.Uint64(header[0:8]))
+      if interval == 0 {
+        log.Fatal("No file to resume downloading")
+      }
+      return (length / interval)
+    }
+    return 0
 }
