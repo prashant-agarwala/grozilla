@@ -5,14 +5,34 @@ import (
   "log"
   "io/ioutil"
   "os"
+  "encoding/binary"
+  "bytes"
 )
 
-func writeBytes(part_filename string, reader []byte) error{
+func createTempFile(part_filename string,fileBegin ,fileEnd int){
+    buf := new(bytes.Buffer)
+    if err := binary.Write(buf, binary.LittleEndian, int64(fileBegin)); err != nil {
+      log.Fatal(err)
+    }
+    if err := binary.Write(buf, binary.LittleEndian, int64(fileEnd)); err != nil {
+      log.Fatal(err)
+    }
+    if err := ioutil.WriteFile(part_filename, []byte(buf.Bytes()), 0666); err != nil {
+      log.Fatal(err)
+    }
+}
+
+
+func writeBytes(part_filename string, reader []byte, byteStart , byteEnd int) error{
     err := os.MkdirAll("temp/", 0777)
     if err != nil {
       return err
     }
-    file, err := os.OpenFile("temp/" + part_filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE,0666)
+    if _, err := os.Stat("temp/" + part_filename); err != nil {
+      log.Println("new file to be created  " , part_filename)
+      createTempFile("temp/" + part_filename,byteStart,byteEnd)
+    }
+    file, err := os.OpenFile("temp/" + part_filename, os.O_WRONLY|os.O_APPEND,0666)
     if err != nil {
       return err
     }
@@ -32,6 +52,7 @@ func mergeFiles(filename string){
         }
         defer file.Close()
         reader,err := ioutil.ReadFile(part_filename)
+        reader = reader[16:]
         if err != nil {
           log.Fatal(err)
         }

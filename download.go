@@ -8,11 +8,11 @@ import (
   "sync"
 )
 
-const noOfFiles = 20
+const noOfFiles = 40
 const PACKETLENGTH = 32000
 var wg sync.WaitGroup
 
-func downloadPacket(client *http.Client, req *http.Request,part_filename string){
+func downloadPacket(client *http.Client, req *http.Request,part_filename string,byteStart, byteEnd int){
     resp, err := client.Do(req)
     if err != nil {
       log.Fatal(err)
@@ -22,7 +22,7 @@ func downloadPacket(client *http.Client, req *http.Request,part_filename string)
       log.Fatal(err)
     }
     log.Println(part_filename, len(reader))
-    err = writeBytes(part_filename , reader)
+    err = writeBytes(part_filename,reader,byteStart,byteEnd)
     if err != nil {
       log.Fatal(err)
     }
@@ -39,10 +39,10 @@ func downloadPart(url,filename string, index, byteStart, byteEnd int){
         packetEnd = byteEnd
       }
       range_header := "bytes=" + strconv.Itoa(packetStart) +"-" + strconv.Itoa(packetEnd-1)
-      log.Println(range_header)
+      //log.Println(range_header)
       req, _ := http.NewRequest("GET",url, nil)
       req.Header.Add("Range", range_header)
-      downloadPacket(client,req,part_filename)
+      downloadPacket(client,req,part_filename,byteStart,byteEnd)
     }
     wg.Done()
 }
