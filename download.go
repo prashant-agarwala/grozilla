@@ -5,46 +5,11 @@ import (
   "net/http"
   "log"
   "io/ioutil"
-  "os"
+  "sync"
 )
 
-const noOfFiles = 40
-func writeBytes(part_filename string, reader []byte) error{
-    file, err := os.OpenFile(part_filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE,0666)
-    if err != nil {
-      return err
-    }
-    defer file.Close()
-    if _, err = file.WriteString(string(reader)); err != nil {
-      return err
-    }
-    return nil
-}
-
-func mergeFiles(filename string){
-    for i := 0; i < noOfFiles ; i++ {
-        part_filename := filename + "_" + strconv.Itoa(i)
-        file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND,0666)
-        if err != nil {
-          log.Fatal(err)
-        }
-        defer file.Close()
-        reader,err := ioutil.ReadFile(part_filename)
-        if err != nil {
-          log.Fatal(err)
-        }
-        if _, err = file.WriteString(string(reader)); err != nil {
-          log.Fatal(err)
-        }
-    }
-}
-
-func clearFiles(filename string){
-  for i := 0; i < noOfFiles ; i++ {
-    part_filename := filename + "_" + strconv.Itoa(i)
-    os.Remove(part_filename)
-  }
-}
+const noOfFiles = 20
+var wg sync.WaitGroup
 
 func downloadPart(url,filename string, index, byteStart, byteEnd int){
     client := &http.Client{}
@@ -60,12 +25,13 @@ func downloadPart(url,filename string, index, byteStart, byteEnd int){
     if err != nil {
       log.Fatal(err)
     }
-    log.Println(len(reader))
+    log.Println(index, len(reader))
     part_filename := filename + "_" + strconv.Itoa(index)
     err = writeBytes(part_filename , reader)
     if err != nil {
       log.Fatal(err)
     }
+    wg.Done()
 }
 
 func Download(url string,length int){
@@ -77,8 +43,10 @@ func Download(url string,length int){
       if (i == noOfFiles - 1 ){
         byteEnd = length
       }
-      downloadPart(url,filename,i,byteStart,byteEnd)
+      wg.Add(1)
+      go downloadPart(url,filename,i,byteStart,byteEnd)
     }
+    wg.Wait()
     mergeFiles(filename)
     clearFiles(filename)
     reader,_ := ioutil.ReadFile(filename)

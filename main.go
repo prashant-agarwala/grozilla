@@ -5,7 +5,6 @@ import
   "log"
   "net/http"
   "strings"
-  "sync"
   "strconv"
 )
 
@@ -30,8 +29,6 @@ func getContentLength(m http.Header) int {
   length, _ := strconv.Atoi(m["Content-Length"][0])
   return length
 }
-
-var wg sync.WaitGroup
 
 func main(){
     log.Println("Hello world")
