@@ -51,7 +51,7 @@ func validateFlags(){
     flag.Usage()
     os.Exit(1)
   }
-  if !(*ovrrdConnLimit) {
+  if !(*ovrdConnLimit) {
     if (*noOfFiles > 20){
       log.Println("Connection limit restricted to 20, either use lower value or override using -N")
       flag.Usage()

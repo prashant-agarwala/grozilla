@@ -5,21 +5,16 @@ efficiently using light weight go routines.
 ### Usage:
 
 ```
-grozilla [-m] [-n] [-r] [-t]  [download link]
+grozilla [-m] [-n] [-r] [-t] [-N] [download link]
 ```
 
 ### Installation:
-
-- Install go package :
-    ```
-    $ go get github.com/cheggaaa/pb
-    ```
-
-- Build the project using :
-  ```
-    $ go build
-  ```
-
+```
+  $ git clone https://github.com/gophergala2016/grozilla.git
+	$ cd grozilla
+	$ go get github.com/cheggaaa/pb
+	$ go build
+```
 ### Description:
 
 The utility allows to parallely download any downloadble file from the download link. Following are the customization flags which a client can
