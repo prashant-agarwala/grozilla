@@ -11,34 +11,25 @@ import (
   "errors"
 )
 
-type http_response struct {
+type httpResponse struct {
     resp *http.Response
     err  error
 }
 
 const PACKETLENGTH = 32000
 var wg sync.WaitGroup
+var errorGoRoutine bool
 
 func downloadPacket(client *http.Client, req *http.Request,part_filename string,byteStart, byteEnd int) error {
-    c := make(chan http_response, 1)
+    c := make(chan httpResponse, 1)
     go func() {
       resp,err := client.Do(req)
-      http_response := http_response{resp,err}
+      http_response := httpResponse{resp,err}
       c <- http_response
     }()
     select {
     case http_response := <-c:
-      if http_response.err != nil{
-        return http_response.err
-      }
-      defer http_response.resp.Body.Close()
-      reader, err := ioutil.ReadAll(http_response.resp.Body)
-      if err != nil {
-        return err
-      }
-      log.Println(part_filename, len(reader))
-      err = writeBytes(part_filename,reader,byteStart,byteEnd)
-      if err != nil {
+      if err := handleResponse(http_response,part_filename,byteStart,byteEnd); err != nil {
         return err
       }
     case <-time.After(time.Second * time.Duration(10)):
@@ -46,6 +37,38 @@ func downloadPacket(client *http.Client, req *http.Request,part_filename string,
       return err
     }
     return nil
+}
+
+func handleResponse(http_response httpResponse,part_filename string, byteStart, byteEnd int) error {
+    if http_response.err != nil{
+      return http_response.err
+    }
+    defer http_response.resp.Body.Close()
+    reader, err := ioutil.ReadAll(http_response.resp.Body)
+    if err != nil {
+      return err
+    }
+    log.Println(part_filename, len(reader))
+    err = writeBytes(part_filename,reader,byteStart,byteEnd)
+    if err != nil {
+      return err
+    }
+    return nil
+}
+
+func downloadPacketWithRetry(client *http.Client, req *http.Request,part_filename string,byteStart, byteEnd int) error{
+  var err error
+  for i := 0 ; i < 5 ; i++ {
+    err = downloadPacket(client, req, part_filename,byteStart,byteEnd)
+    if (err == nil){
+      return nil
+    } else if (err.Error() == "Manual time out as response not recieved") {
+      continue
+    } else {
+      return err
+    }
+  }
+  return err
 }
 
 func downloadPart(url,filename string, index, byteStart, byteEnd int){
@@ -62,7 +85,17 @@ func downloadPart(url,filename string, index, byteStart, byteEnd int){
       //log.Println(range_header)
       req, _ := http.NewRequest("GET",url, nil)
       req.Header.Add("Range", range_header)
-      downloadPacket(client,req,part_filename,byteStart,byteEnd)
+      err := downloadPacketWithRetry(client,req,part_filename,byteStart,byteEnd)
+      if err != nil {
+        handleErrorInGoRoutine(i,err)
+        return
+      }
+      // if (index == 3){
+      //     err := errors.New("error in go routine 3")
+      //     handleErrorInGoRoutine(i,err)
+      //     return
+      // }
+
     }
     wg.Done()
 }
@@ -82,10 +115,13 @@ func Download(url string,length int){
       go downloadPart(url,filename,i,byteStart,byteEnd)
     }
     wg.Wait()
-    mergeFiles(filename,*noOfFiles)
-    clearFiles(filename,*noOfFiles)
-    reader,_ := ioutil.ReadFile(filename)
-    log.Println(len(reader))
+    if (!errorGoRoutine){
+      mergeFiles(filename,*noOfFiles)
+      clearFiles(filename,*noOfFiles)
+      reader,_ := ioutil.ReadFile(filename)
+      log.Println(len(reader))
+      log.Println("download complete")
+    }
 }
 
 func Resume(url string,length int){
@@ -111,10 +147,13 @@ func Resume(url string,length int){
       }
     }
     wg.Wait()
-    mergeFiles(filename,*noOfFiles)
-    clearFiles(filename,*noOfFiles)
-    reader,_ := ioutil.ReadFile(filename)
-    log.Println(len(reader))
+    if (!errorGoRoutine){
+      mergeFiles(filename,*noOfFiles)
+      clearFiles(filename,*noOfFiles)
+      reader,_ := ioutil.ReadFile(filename)
+      log.Println(len(reader))
+      log.Println("download complete")
+    }
 }
 
 func DownloadSingle(url string){
@@ -134,4 +173,10 @@ func DownloadSingle(url string){
     if err != nil {
       log.Fatal(err)
     }
+}
+
+func handleErrorInGoRoutine(index int, err error){
+    log.Println(err)
+    errorGoRoutine = true
+    wg.Done()
 }
