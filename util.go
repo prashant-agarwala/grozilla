@@ -6,6 +6,8 @@ import
   "net/http"
   "strings"
   "strconv"
+  "os"
+  "flag"
 )
 
 func acceptRanges(m http.Header) bool {
@@ -41,4 +43,19 @@ func getFinalurl(url string) (string, http.Header){
     return getFinalurl(responseUrl)
   }
   return responseUrl, res.Header
+}
+
+func validateFlags(){
+  if (*noOfFiles <= 0 || *maxTryCount <= 0 || *timeout <= 0){
+    log.Println("Give a value greater than 0")
+    flag.Usage()
+    os.Exit(1)
+  }
+  if !(*ovrrdConnLimit) {
+    if (*noOfFiles > 20){
+      log.Println("Connection limit restricted to 20, either use lower value or override using -N")
+      flag.Usage()
+      os.Exit(1)
+    }
+  }
 }

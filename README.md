@@ -25,9 +25,6 @@ grozilla [-m] [-n] [-r] [-t]  [download link]
 The utility allows to parallely download any downloadble file from the download link. Following are the customization flags which a client can
 give
 
-``` -m attempts ```
-	Used to specify maximum attempt to establish a connection (default 1).
-
 ``` -n routines ```
 	Used to specify number of go routines (default 10).
 
@@ -36,6 +33,13 @@ give
 
 ``` -t time ```
 	Used to specify maximum time in seconds it will wait to establish a connection (default 900).
+
+``` -m attempts ```
+	Used to specify maximum attempt to establish a connection (default 1).
+
+``` -N nolimit ```
+	Used to override maximum connection limit of 20
+
 
 ### Example:
 
