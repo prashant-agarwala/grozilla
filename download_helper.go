@@ -3,7 +3,6 @@ package main
 import (
   "strconv"
   "net/http"
-  "log"
   "io/ioutil"
   "sync"
   "time"
@@ -100,7 +99,7 @@ func downloadPart(url,filename string, index, byteStart, byteEnd int){
 }
 
 func handleErrorInGoRoutine(index int, err error){
-    log.Println(err)
+    ReportErrorStat(index,err,*noOfFiles)
     errorGoRoutine = true
     wg.Done()
 }

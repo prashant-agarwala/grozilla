@@ -40,6 +40,9 @@ func Resume(url string,length int){
     filename := getFilenameFromUrl(url)
     *noOfFiles = noOfExistingConnection(filename,length)
     partLength := length / *noOfFiles
+    if err := SetupResumeLog(filename,length,*noOfFiles); err != nil {
+      log.Fatal(err)
+    }
     for i := 0 ; i < *noOfFiles ; i++ {
       part_filename := "temp/" +filename + "_" + strconv.Itoa(i)
       if _, err := os.Stat(part_filename); err != nil {
@@ -59,6 +62,7 @@ func Resume(url string,length int){
       }
     }
     wg.Wait()
+    FinishLog()
     if (!errorGoRoutine){
       mergeFiles(filename,*noOfFiles)
       clearFiles(filename,*noOfFiles)
