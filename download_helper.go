@@ -60,7 +60,6 @@ func downloadPacketWithRetry(client *http.Client, req *http.Request,part_filenam
     if (err == nil){
       return nil
     } else if (err.Error() == "Manual time out as response not recieved") {
-      //log.Println("retrying",part_filename)
       continue
     } else {
       return err
@@ -88,12 +87,6 @@ func downloadPart(url,filename string, index, byteStart, byteEnd int){
         return
       }
       UpdateStat(index,packetStart,packetEnd)
-      // if (index == 3){
-      //     err := errors.New("error in go routine 3")
-      //     handleErrorInGoRoutine(i,err)
-      //     return
-      // }
-
     }
     wg.Done()
 }

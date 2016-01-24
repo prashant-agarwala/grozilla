@@ -90,9 +90,7 @@ func isDirEmpty(name string) (bool, error) {
 }
 
 func clearFiles(filename string, count int){
-  //os.RemoveAll("temp")
   for i := 0; i < count ; i++ {
-    //time.Sleep(1*time.Second)
     part_filename := "temp/" + filename + "_" + strconv.Itoa(i)
     os.Remove(part_filename)
   }

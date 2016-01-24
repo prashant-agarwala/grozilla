@@ -12,6 +12,9 @@ func Download(url string,length int){
     partLength := length / *noOfFiles
     filename := getFilenameFromUrl(url)
     filename  = getFilename(filename)
+    if _, err := os.Stat("temp/" + filename + "_0"); err == nil {
+      log.Fatal("Downloading has already started, resume downloading.")
+    }
     if err := SetupLog(length, *noOfFiles); err != nil {
       log.Fatal(err)
     }
@@ -31,9 +34,9 @@ func Download(url string,length int){
     if (!errorGoRoutine){
       mergeFiles(filename,*noOfFiles)
       clearFiles(filename,*noOfFiles)
-      reader,_ := ioutil.ReadFile(filename)
-      log.Println(len(reader))
-      log.Println("download complete")
+      log.Println("download successful")
+    } else {
+      log.Println("download unsuccessful")
     }
 }
 
@@ -68,9 +71,9 @@ func Resume(url string,length int){
     if (!errorGoRoutine){
       mergeFiles(filename,*noOfFiles)
       clearFiles(filename,*noOfFiles)
-      reader,_ := ioutil.ReadFile(filename)
-      log.Println(len(reader))
-      log.Println("download complete")
+      log.Println("download successful")
+    } else {
+      log.Println("download unsuccessful")
     }
 }
 

@@ -37,7 +37,6 @@ func getFinalurl(url string) (string, http.Header){
     log.Fatal(err)
   }
   responseUrl := res.Request.URL.String()
-  log.Println(responseUrl)
   if responseUrl != url {
     return getFinalurl(responseUrl)
   }
