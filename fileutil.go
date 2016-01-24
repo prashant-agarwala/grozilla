@@ -9,6 +9,7 @@ import (
   "bytes"
   "io"
   "time"
+  "strings"
 )
 
 func createTempFile(part_filename string,fileBegin ,fileEnd int){
@@ -125,4 +126,23 @@ func noOfExistingConnection(filename string,length int) int{
       return (length / interval)
     }
     return 0
+}
+
+func getFilename(filename string) string {
+    j := 0
+    for j = 0;; j++{
+      if (j == 1){
+        filename += "(1)"
+      }
+      if ((j != 0) && (j != 1)){
+        filename = strings.Replace(filename, "(" + strconv.Itoa(j - 1)  + ")", "(" + strconv.Itoa(j)  + ")", 1)
+      }
+      if _, err := os.Stat(filename); os.IsNotExist(err) {
+        break
+      }
+    }
+    if (j != 0 && j != 1){
+      filename = strings.Replace(filename, "(" + strconv.Itoa(j - 1)  + ")", "(" + strconv.Itoa(j)  + ")", 1)
+    }
+    return filename
 }

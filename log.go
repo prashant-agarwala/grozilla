@@ -12,6 +12,7 @@ import (
 type ConnectionLog struct{
     stats []ConnectionStat
     pool *pb.Pool
+    totalbar *pb.ProgressBar
 }
 
 type ConnectionStat struct{
@@ -24,7 +25,7 @@ var connLog ConnectionLog
 
 func SetupLog(length ,noOfConn int) error {
     connLog.stats = make([]ConnectionStat,noOfConn)
-    barArray := make([]*pb.ProgressBar,noOfConn)
+    barArray := make([]*pb.ProgressBar,noOfConn+1)
     len_sub := length / noOfConn
     for i := 0 ; i< noOfConn; i++ {
       file_begin := len_sub * i
@@ -37,6 +38,10 @@ func SetupLog(length ,noOfConn int) error {
       connLog.stats[i] = ConnectionStat{connectionIndex: i, pbar: bar}
       barArray[i] = bar
     }
+    bar := pb.New(length).Prefix("Total ")
+    customizeBar(bar)
+    connLog.totalbar = bar
+    barArray[noOfConn] = bar
     var err error
     connLog.pool, err = pb.StartPool(barArray...)
     if err != nil{
@@ -54,7 +59,8 @@ func customizeBar( bar *pb.ProgressBar){
 }
 func SetupResumeLog(filename string,length,noOfConn int) error {
     connLog.stats = make([]ConnectionStat,noOfConn)
-    barArray := make([]*pb.ProgressBar,noOfConn)
+    barArray := make([]*pb.ProgressBar,noOfConn+1)
+    totalbar := pb.New(length).Prefix("Total ")
     len_sub := length / noOfConn
     for i := 0; i < noOfConn ; i++ {
       part_filename := "temp/" + filename + "_" + strconv.Itoa(i)
@@ -69,6 +75,7 @@ func SetupResumeLog(filename string,length,noOfConn int) error {
           bar := pb.New(file_end - file_begin).Prefix("Connection " + strconv.Itoa(i+1) + " ")
           for j := 0 ; j < len(reader)-16 ; j++{
             bar.Increment()
+            totalbar.Increment()
           }
           customizeBar(bar)
           connLog.stats[i] = ConnectionStat{connectionIndex: i , pbar: bar}
@@ -85,6 +92,9 @@ func SetupResumeLog(filename string,length,noOfConn int) error {
           barArray[i] = bar
       }
     }
+    customizeBar(totalbar)
+    connLog.totalbar = totalbar
+    barArray[noOfConn] = totalbar
     var err error
     connLog.pool, err = pb.StartPool(barArray...)
     if err != nil{
@@ -97,6 +107,7 @@ func SetupResumeLog(filename string,length,noOfConn int) error {
 func UpdateStat(i int,file_begin int,file_end int){
    for j := file_begin ; j < file_end; j++ {
      connLog.stats[i].pbar.Increment()
+     connLog.totalbar.Increment()
    }
 }
 

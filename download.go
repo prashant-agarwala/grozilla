@@ -11,6 +11,7 @@ import (
 func Download(url string,length int){
     partLength := length / *noOfFiles
     filename := getFilenameFromUrl(url)
+    filename  = getFilename(filename)
     if err := SetupLog(length, *noOfFiles); err != nil {
       log.Fatal(err)
     }
@@ -38,6 +39,7 @@ func Download(url string,length int){
 
 func Resume(url string,length int){
     filename := getFilenameFromUrl(url)
+    filename  = getFilename(filename)
     *noOfFiles = noOfExistingConnection(filename,length)
     partLength := length / *noOfFiles
     if err := SetupResumeLog(filename,length,*noOfFiles); err != nil {
