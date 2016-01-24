@@ -10,11 +10,10 @@ grozilla [-m] [-n] [-r] [-t] [-N] [download link]
 
 ### Installation:
 ```
-  $ git clone https://github.com/gophergala2016/grozilla.git
-	$ cd grozilla
-	$ go get github.com/cheggaaa/pb
-	$ go build
+  $ go get github.com/gophergala2016/grozilla
 ```
+This will download grozilla to $GOPATH/src/github.com/gophergala2016/grozilla. In this directory run go build to create the grozilla binary.
+
 ### Description:
 
 The utility allows to parallely download any downloadble file from the download link. Following are the customization flags which a client can
