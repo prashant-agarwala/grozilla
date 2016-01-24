@@ -30,10 +30,14 @@ func getContentLength(m http.Header) int {
   length, _ := strconv.Atoi(m["Content-Length"][0])
   return length
 }
+
 var (
-  noOfFiles     = flag.Int("n", 2, "number of parallel connection")
+  noOfFiles     = flag.Int("n", 10, "number of parallel connection")
   resume        = flag.Bool("r", false, "resume pending download")
+  maxTryCount   = flag.Int("m",1,"maximum attempts to establish a connection")
+  timeout       = flag.Int("t",900,"maximum time in seconds it will wait to establish a connection")
 )
+
 func main(){
     flag.Parse()
     log.Println("Hello world")
@@ -56,13 +60,20 @@ func main(){
     //log.Println(getFilenameFromUrl(url))
 
     if *resume {
-      log.Println("resume to start")
-      Resume(url, getContentLength(res.Header))
+      if acceptRanges(res.Header) {
+        log.Println("resume to start")
+        Resume(url, getContentLength(res.Header))
+      }
     } else {
-      log.Println("down to start")
-      Download(url, getContentLength(res.Header))
+        if acceptRanges(res.Header) {
+          log.Println("parallel down to start")
+          Download(url, getContentLength(res.Header))
+        } else {
+          log.Println("single down to start")
+          DownloadSingle(url)
+        }
     }
-    //DownloadSingle(url)
+
 
 
 }
