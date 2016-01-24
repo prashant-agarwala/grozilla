@@ -11,6 +11,9 @@ import (
 func Download(url string,length int){
     partLength := length / *noOfFiles
     filename := getFilenameFromUrl(url)
+    if err := SetupLog(length, *noOfFiles); err != nil {
+      log.Fatal(err)
+    }
     for i := 0 ; i < *noOfFiles ; i++ {
       byteStart := partLength * (i)
       byteEnd   := byteStart + partLength
@@ -23,6 +26,7 @@ func Download(url string,length int){
       go downloadPart(url,filename,i,byteStart,byteEnd)
     }
     wg.Wait()
+    FinishLog()
     if (!errorGoRoutine){
       mergeFiles(filename,*noOfFiles)
       clearFiles(filename,*noOfFiles)
@@ -76,7 +80,6 @@ func DownloadSingle(url string){
     if err != nil {
       log.Fatal(err)
     }
-    log.Println(len(reader))
     err = ioutil.WriteFile(filename, reader,0666)
     if err != nil {
       log.Fatal(err)

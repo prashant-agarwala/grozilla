@@ -31,7 +31,6 @@ func writeBytes(part_filename string, reader []byte, byteStart , byteEnd int) er
       return err
     }
     if _, err := os.Stat("temp/" + part_filename); err != nil {
-      log.Println("new file to be created  " , part_filename)
       createTempFile("temp/" + part_filename,byteStart,byteEnd)
     }
     file, err := os.OpenFile("temp/" + part_filename, os.O_WRONLY|os.O_APPEND,0666)

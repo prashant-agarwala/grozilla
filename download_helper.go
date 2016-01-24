@@ -47,7 +47,6 @@ func handleResponse(http_response httpResponse,part_filename string, byteStart, 
     if err != nil {
       return err
     }
-    log.Println(part_filename, len(reader))
     err = writeBytes(part_filename,reader,byteStart,byteEnd)
     if err != nil {
       return err
@@ -62,7 +61,7 @@ func downloadPacketWithRetry(client *http.Client, req *http.Request,part_filenam
     if (err == nil){
       return nil
     } else if (err.Error() == "Manual time out as response not recieved") {
-      log.Println("retrying",part_filename)
+      //log.Println("retrying",part_filename)
       continue
     } else {
       return err
@@ -82,7 +81,6 @@ func downloadPart(url,filename string, index, byteStart, byteEnd int){
         packetEnd = byteEnd
       }
       range_header := "bytes=" + strconv.Itoa(packetStart) +"-" + strconv.Itoa(packetEnd-1)
-      //log.Println(range_header)
       req, _ := http.NewRequest("GET",url, nil)
       req.Header.Add("Range", range_header)
       err := downloadPacketWithRetry(client,req,part_filename,byteStart,byteEnd)
@@ -90,6 +88,7 @@ func downloadPart(url,filename string, index, byteStart, byteEnd int){
         handleErrorInGoRoutine(i,err)
         return
       }
+      UpdateStat(index,packetStart,packetEnd)
       // if (index == 3){
       //     err := errors.New("error in go routine 3")
       //     handleErrorInGoRoutine(i,err)
