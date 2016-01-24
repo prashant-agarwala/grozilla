@@ -3,33 +3,8 @@ package main
 import
 (
   "log"
-  "net/http"
-  "strings"
-  "strconv"
   "flag"
 )
-
-func acceptRanges(m http.Header) bool {
-  for _,v := range m["Accept-Ranges"]{
-    if v == "bytes"{
-      return true
-    }
-  }
-  return false
-}
-
-func getFilenameFromUrl(url string) string {
-  file := url[strings.LastIndex(url,"/")+1:]
-  if (strings.Index(file,"?") != -1) {
-    return file[:strings.Index(file,"?")]
-  }
-  return file
-}
-
-func getContentLength(m http.Header) int {
-  length, _ := strconv.Atoi(m["Content-Length"][0])
-  return length
-}
 
 var (
   noOfFiles     = flag.Int("n", 10, "number of parallel connection")
@@ -50,24 +25,19 @@ func main(){
     //url := "https://nodejs.org/dist/v4.2.4/node-v4.2.4.tar.gz"
     //url := "https://storage.googleapis.com/golang/go1.5.linux-amd64.tar.gz"
     //url := "http://localhost/go1.5.linux-amd64.tar.gz"
-
-    res, err := http.Head(url);
-    if err != nil{
-      log.Fatal(err)
-    }
-    log.Println(res.Header)
-    log.Println(acceptRanges(res.Header))
+    url,resHeader := getFinalurl(url)
+    log.Println(acceptRanges(resHeader))
     //log.Println(getFilenameFromUrl(url))
 
     if *resume {
-      if acceptRanges(res.Header) {
+      if acceptRanges(resHeader) {
         log.Println("resume to start")
-        Resume(url, getContentLength(res.Header))
+        Resume(url, getContentLength(resHeader))
       }
     } else {
-        if acceptRanges(res.Header) {
+        if acceptRanges(resHeader) {
           log.Println("parallel down to start")
-          Download(url, getContentLength(res.Header))
+          Download(url, getContentLength(resHeader))
         } else {
           log.Println("single down to start")
           DownloadSingle(url)
