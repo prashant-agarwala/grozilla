@@ -18,7 +18,7 @@ func acceptRanges(m http.Header) bool {
 	return false
 }
 
-func getFilenameFromUrl(url string) string {
+func getFilenameFromURL(url string) string {
 	file := url[strings.LastIndex(url, "/")+1:]
 	if strings.Index(file, "?") != -1 {
 		return file[:strings.Index(file, "?")]
@@ -37,11 +37,11 @@ func getFinalurl(url string) (string, http.Header) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	responseUrl := res.Request.URL.String()
-	if responseUrl != url {
-		return getFinalurl(responseUrl)
+	responseURL := res.Request.URL.String()
+	if responseURL != url {
+		return getFinalurl(responseURL)
 	}
-	return responseUrl, res.Header
+	return responseURL, res.Header
 }
 
 func validateFlags() {

@@ -10,12 +10,14 @@ import (
 	"github.com/cheggaaa/pb"
 )
 
+//ConnectionLog keeps log of all connection throgh progressbar
 type ConnectionLog struct {
 	stats    []ConnectionStat
 	pool     *pb.Pool
 	totalbar *pb.ProgressBar
 }
 
+//ConnectionStat keeps statistic of each connection
 type ConnectionStat struct {
 	connectionIndex int
 	pbar            *pb.ProgressBar
@@ -24,17 +26,18 @@ type ConnectionStat struct {
 
 var connLog ConnectionLog
 
+//SetupLog sets up initial ConnectionLog
 func SetupLog(length, noOfConn int) error {
 	connLog.stats = make([]ConnectionStat, noOfConn)
 	barArray := make([]*pb.ProgressBar, noOfConn+1)
-	len_sub := length / noOfConn
+	lenSub := length / noOfConn
 	for i := 0; i < noOfConn; i++ {
-		file_begin := len_sub * i
-		file_end := len_sub * (i + 1)
+		fileBegin := lenSub * i
+		fileEnd := lenSub * (i + 1)
 		if i == noOfConn-1 {
-			file_end = length
+			fileEnd = length
 		}
-		bar := pb.New(file_end - file_begin).Prefix("Connection " + strconv.Itoa(i+1) + " ")
+		bar := pb.New(fileEnd - fileBegin).Prefix("Connection " + strconv.Itoa(i+1) + " ")
 		customizeBar(bar)
 		connLog.stats[i] = ConnectionStat{connectionIndex: i, pbar: bar}
 		barArray[i] = bar
@@ -58,22 +61,24 @@ func customizeBar(bar *pb.ProgressBar) {
 	bar.SetMaxWidth(80)
 	bar.SetUnits(pb.U_BYTES)
 }
+
+//SetupResumeLog sets up ConnectionLog for a resumed download
 func SetupResumeLog(filename string, length, noOfConn int) error {
 	connLog.stats = make([]ConnectionStat, noOfConn)
 	barArray := make([]*pb.ProgressBar, noOfConn+1)
 	totalbar := pb.New(length).Prefix("Total ")
-	len_sub := length / noOfConn
+	lenSub := length / noOfConn
 	for i := 0; i < noOfConn; i++ {
-		part_filename := "temp/" + filename + "_" + strconv.Itoa(i)
-		if _, err := os.Stat(part_filename); err == nil {
-			reader, err := ioutil.ReadFile(part_filename)
+		partFilename := "temp/" + filename + "_" + strconv.Itoa(i)
+		if _, err := os.Stat(partFilename); err == nil {
+			reader, err := ioutil.ReadFile(partFilename)
 			if err != nil {
 				return err
 			}
 			header := reader[:16]
-			file_begin := int(binary.LittleEndian.Uint64(header[0:8]))
-			file_end := int(binary.LittleEndian.Uint64(header[8:16]))
-			bar := pb.New(file_end - file_begin).Prefix("Connection " + strconv.Itoa(i+1) + " ")
+			fileBegin := int(binary.LittleEndian.Uint64(header[0:8]))
+			fileEnd := int(binary.LittleEndian.Uint64(header[8:16]))
+			bar := pb.New(fileEnd - fileBegin).Prefix("Connection " + strconv.Itoa(i+1) + " ")
 			for j := 0; j < len(reader)-16; j++ {
 				bar.Increment()
 				totalbar.Increment()
@@ -82,12 +87,12 @@ func SetupResumeLog(filename string, length, noOfConn int) error {
 			connLog.stats[i] = ConnectionStat{connectionIndex: i, pbar: bar}
 			barArray[i] = bar
 		} else {
-			file_begin := len_sub * i
-			file_end := len_sub * (i + 1)
+			fileBegin := lenSub * i
+			fileEnd := lenSub * (i + 1)
 			if i == noOfConn-1 {
-				file_end = length
+				fileEnd = length
 			}
-			bar := pb.New(file_end - file_begin).Prefix("Connection " + strconv.Itoa(i+1) + " ")
+			bar := pb.New(fileEnd - fileBegin).Prefix("Connection " + strconv.Itoa(i+1) + " ")
 			customizeBar(bar)
 			connLog.stats[i] = ConnectionStat{connectionIndex: i, pbar: bar}
 			barArray[i] = bar
@@ -104,17 +109,20 @@ func SetupResumeLog(filename string, length, noOfConn int) error {
 	return nil
 }
 
-func UpdateStat(i int, file_begin int, file_end int) {
-	for j := file_begin; j < file_end; j++ {
+//UpdateStat updates statistic of a connection
+func UpdateStat(i int, fileBegin int, fileEnd int) {
+	for j := fileBegin; j < fileEnd; j++ {
 		connLog.stats[i].pbar.Increment()
 		connLog.totalbar.Increment()
 	}
 }
 
+//FinishLog stops ConnectionLog pool
 func FinishLog() {
 	connLog.pool.Stop()
 }
 
+//ReportErrorStat reports a log if an error occurs in a connection
 func ReportErrorStat(i int, err error, noOfConn int) {
 	connLog.stats[i].Err = err
 	connLog.pool.Stop()

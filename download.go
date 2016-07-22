@@ -8,9 +8,10 @@ import (
 	"strconv"
 )
 
+//Download downloads a file from a given url by creating parallel connection
 func Download(url string, length int) {
 	partLength := length / *noOfFiles
-	filename := getFilenameFromUrl(url)
+	filename := getFilenameFromURL(url)
 	filename = getFilename(filename)
 	if _, err := os.Stat("temp/" + filename + "_0"); err == nil {
 		log.Fatal("Downloading has already started, resume downloading.")
@@ -40,8 +41,9 @@ func Download(url string, length int) {
 	}
 }
 
+//Resume resumes a interrupted download by creating same number of connection
 func Resume(url string, length int) {
-	filename := getFilenameFromUrl(url)
+	filename := getFilenameFromURL(url)
 	filename = getFilename(filename)
 	*noOfFiles = noOfExistingConnection(filename, length)
 	partLength := length / *noOfFiles
@@ -49,8 +51,8 @@ func Resume(url string, length int) {
 		log.Fatal(err)
 	}
 	for i := 0; i < *noOfFiles; i++ {
-		part_filename := "temp/" + filename + "_" + strconv.Itoa(i)
-		if _, err := os.Stat(part_filename); err != nil {
+		partFilename := "temp/" + filename + "_" + strconv.Itoa(i)
+		if _, err := os.Stat(partFilename); err != nil {
 			byteStart := partLength * (i)
 			byteEnd := byteStart + partLength
 			if i == *noOfFiles-1 {
@@ -59,7 +61,7 @@ func Resume(url string, length int) {
 			wg.Add(1)
 			go downloadPart(url, filename, i, byteStart, byteEnd)
 		} else {
-			byteStart, byteEnd := readHeader(part_filename)
+			byteStart, byteEnd := readHeader(partFilename)
 			if byteStart < byteEnd {
 				wg.Add(1)
 				go downloadPart(url, filename, i, byteStart, byteEnd)
@@ -77,8 +79,9 @@ func Resume(url string, length int) {
 	}
 }
 
+//DownloadSingle downloads a file from a given url by creating single connection
 func DownloadSingle(url string) {
-	filename := getFilenameFromUrl(url)
+	filename := getFilenameFromURL(url)
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", url, nil)
 	resp, err := client.Do(req)
