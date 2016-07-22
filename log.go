@@ -129,9 +129,10 @@ func ReportErrorStat(i int, err error, noOfConn int) {
 	log.Println()
 	log.Println("Error in connection " + strconv.Itoa(i+1) + " : " + err.Error())
 	log.Println()
-	barArray := make([]*pb.ProgressBar, noOfConn)
+	barArray := make([]*pb.ProgressBar, noOfConn+1)
 	for i := 0; i < noOfConn; i++ {
 		barArray[i] = connLog.stats[i].pbar
 	}
+	barArray[noOfConn] = connLog.totalbar
 	connLog.pool, _ = pb.StartPool(barArray...)
 }

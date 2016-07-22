@@ -85,7 +85,7 @@ func downloadPart(url, filename string, index, byteStart, byteEnd int) {
 		req.Header.Add("Range", rangeHeader)
 		err := downloadPacketWithRetry(client, req, partFilename, byteStart, byteEnd)
 		if err != nil {
-			handleErrorInGoRoutine(i, err)
+			handleErrorInGoRoutine(index, err)
 			return
 		}
 		UpdateStat(index, packetStart, packetEnd)
